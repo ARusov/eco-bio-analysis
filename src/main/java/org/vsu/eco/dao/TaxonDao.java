@@ -19,7 +19,6 @@ public class TaxonDao {
     @PersistenceContext
     private EntityManager em;
 
-
     public void createTaxon(Taxon taxon) {
         if (taxon != null) {
             em.persist(taxon);
@@ -40,12 +39,23 @@ public class TaxonDao {
     }
 
     public void removeTaxon(Taxon taxon) {
-    if(taxon!=null && taxon.getId()!=0){
-        removeTaxon(taxon.getId());
-    }
+        if (taxon != null && taxon.getId() != 0) {
+            removeTaxon(taxon.getId());
+        }
     }
 
     public void removeTaxon(int taxonId) {
         em.createQuery("delete from Taxon where id=:id").setParameter("id", taxonId).executeUpdate();
+    }
+
+    public void saveTaxon(Taxon taxon) {
+        if (taxon != null) {
+            if (taxon.getId() > 0) {
+                em.merge(taxon);
+            } else {
+                em.persist(taxon);
+            }
+            em.flush();
+        }
     }
 }

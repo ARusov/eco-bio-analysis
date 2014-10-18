@@ -7,7 +7,6 @@ import org.vsu.eco.model.Taxon;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,7 +21,7 @@ import java.util.List;
 public class TaxonTable extends JTable {
 
     private DefaultTableModelNotEditable tableModel;
-    private JPopupMenu deletePopupMenu;
+    private JPopupMenu popupMenu;
     private ApplicationContext applicationContext;
 
     public TaxonTable(ApplicationContext applicationContext) {
@@ -36,20 +35,35 @@ public class TaxonTable extends JTable {
         getTableModel().setColumnIdentifiers(getColumnNames());
         getColumnModel().removeColumn(getColumnModel().getColumn(0));
         setData();
-//        addEmptyRow();
-//        addChangeListener();
         addRightClick();
+        addDoubleClick();
     }
 
-    private void refreshData() {
-        setModel(new DefaultTableModel());
+    public void refreshData() {
+        setModel(new DefaultTableModelNotEditable());
         getTableModel().setColumnIdentifiers(getColumnNames());
+        getColumnModel().removeColumn(getColumnModel().getColumn(0));
         setData();
     }
 
     private void addRightClick() {
         addRightClickSelection();
-        setComponentPopupMenu(getDeletePopupMenu());
+        setComponentPopupMenu(getPopupMenu());
+    }
+
+    private void addDoubleClick() {
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent me) {
+                JTable table = (JTable) me.getSource();
+                Point p = me.getPoint();
+                int row = table.rowAtPoint(p);
+                if (me.getClickCount() == 2) {
+                    Taxon taxon = getTaxon(row);
+                    saveTaxonDialog(taxon);
+                }
+            }
+        });
     }
 
     private DefaultTableModel getTableModel() {
@@ -57,10 +71,20 @@ public class TaxonTable extends JTable {
         return tableModel;
     }
 
-    private JPopupMenu getDeletePopupMenu() {
-        if (deletePopupMenu == null) {
-            deletePopupMenu = new JPopupMenu();
+    private JPopupMenu getPopupMenu() {
+        if (popupMenu == null) {
+            popupMenu = new JPopupMenu();
         }
+
+        JMenuItem addItem = new JMenuItem("Добавить");
+        addItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveTaxonDialog(new Taxon());
+            }
+        });
+        popupMenu.add(addItem);
+
         JMenuItem deleteItem = new JMenuItem("Удалить");
         deleteItem.addActionListener(new ActionListener() {
             @Override
@@ -69,8 +93,8 @@ public class TaxonTable extends JTable {
                 refreshData();
             }
         });
-        deletePopupMenu.add(deleteItem);
-        return deletePopupMenu;
+        popupMenu.add(deleteItem);
+        return popupMenu;
     }
 
     public void setData() {
@@ -88,7 +112,7 @@ public class TaxonTable extends JTable {
         return columnNames;
     }
 
-    private TaxonDao getTaxonDAO() {
+    public TaxonDao getTaxonDAO() {
         return (TaxonDao) applicationContext.getBean("taxonDao");
     }
 
@@ -140,8 +164,10 @@ public class TaxonTable extends JTable {
         return c;
     }
 
-
-
+    private void saveTaxonDialog(Taxon taxon) {
+        TaxonDialog taxonDialog = new TaxonDialog(taxon, this);
+        taxonDialog.setVisible(true);
+    }
 
     public class DefaultTableModelNotEditable extends DefaultTableModel {
         @Override
