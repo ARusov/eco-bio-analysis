@@ -5,19 +5,15 @@ import org.vsu.eco.dao.TaxonDao;
 import org.vsu.eco.model.Taxon;
 
 import javax.swing.*;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * Created by arusov on 3/9/14.
@@ -25,7 +21,7 @@ import java.util.Vector;
 
 public class TaxonTable extends JTable {
 
-    private DefaultTableModel tableModel;
+    private DefaultTableModelNotEditable tableModel;
     private JPopupMenu deletePopupMenu;
     private ApplicationContext applicationContext;
 
@@ -36,41 +32,19 @@ public class TaxonTable extends JTable {
     }
 
     private void init() {
+        setModel(new DefaultTableModelNotEditable());
         getTableModel().setColumnIdentifiers(getColumnNames());
         getColumnModel().removeColumn(getColumnModel().getColumn(0));
         setData();
-        addEmptyRow();
-        addChangeListener();
+//        addEmptyRow();
+//        addChangeListener();
         addRightClick();
-    }
-
-    private void addChangeListener() {
-        getDefaultEditor(String.class).addCellEditorListener(new CellEditorListener() {
-            @Override
-            public void editingStopped(ChangeEvent e) {
-                Taxon taxon = getTaxon(getSelectedRow());
-                if (taxon.getId() == 0) {
-                    getTaxonDAO().createTaxon(taxon);
-                    refreshData();
-                } else {
-                    getTaxonDAO().updateTaxon(taxon);
-                    refreshData();
-                }
-            }
-
-            @Override
-            public void editingCanceled(ChangeEvent e) {
-
-            }
-        });
-
     }
 
     private void refreshData() {
         setModel(new DefaultTableModel());
         getTableModel().setColumnIdentifiers(getColumnNames());
         setData();
-        addEmptyRow();
     }
 
     private void addRightClick() {
@@ -79,7 +53,7 @@ public class TaxonTable extends JTable {
     }
 
     private DefaultTableModel getTableModel() {
-        tableModel= (DefaultTableModel) getModel();
+        tableModel = (DefaultTableModelNotEditable) getModel();
         return tableModel;
     }
 
@@ -97,11 +71,6 @@ public class TaxonTable extends JTable {
         });
         deletePopupMenu.add(deleteItem);
         return deletePopupMenu;
-    }
-
-    public void addEmptyRow() {
-        Taxon taxon = new Taxon();
-        getTableModel().addRow(taxon.toObject());
     }
 
     public void setData() {
@@ -138,15 +107,16 @@ public class TaxonTable extends JTable {
         taxon.setComment((String) getTableModel().getValueAt(rowIndex, 10));
         return taxon;
     }
+
     private void addRightClickSelection() {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if(SwingUtilities.isRightMouseButton(e)){
+                if (SwingUtilities.isRightMouseButton(e)) {
                     Point p = e.getPoint();
-                    int rowNumber = rowAtPoint( p );
+                    int rowNumber = rowAtPoint(p);
                     ListSelectionModel model = getSelectionModel();
-                    model.setSelectionInterval( rowNumber, rowNumber );
+                    model.setSelectionInterval(rowNumber, rowNumber);
                 }
             }
         });
@@ -155,19 +125,29 @@ public class TaxonTable extends JTable {
     @Override
     public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
         Component c = super.prepareRenderer(renderer, row, column);
-        JComponent jc = (JComponent)c;
+        JComponent jc = (JComponent) c;
 
-        if (isRowSelected(row)){
-            int top = (row > 0 && isRowSelected(row-1))?1:2;
-            int left = column == 0?2:0;
-            int bottom = (row < getRowCount()-1 && isRowSelected(row + 1))?1:2;
-            int right = column == getColumnCount()-1?2:0;
+        if (isRowSelected(row)) {
+            int top = (row > 0 && isRowSelected(row - 1)) ? 1 : 2;
+            int left = column == 0 ? 2 : 0;
+            int bottom = (row < getRowCount() - 1 && isRowSelected(row + 1)) ? 1 : 2;
+            int right = column == getColumnCount() - 1 ? 2 : 0;
 
             jc.setBorder(BorderFactory.createMatteBorder(top, left, bottom, right, this.getSelectionBackground()));
-        }
-        else
+        } else
             jc.setBorder(null);
 
         return c;
     }
+
+
+
+
+    public class DefaultTableModelNotEditable extends DefaultTableModel {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    }
 }
+

@@ -4,8 +4,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.vsu.eco.view.MainForm;
 
-import javax.swing.*;
-
 /**
  * Created by arusov on 3/9/14.
  */
