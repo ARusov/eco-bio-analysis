@@ -28,7 +28,7 @@ public class Point {
     private Set<ParameterH> parameterH = new HashSet<ParameterH>();
 
     public static String[] getColumnNames() {
-        return new String[]{"ID", "Таксон", "h", "S", "x", "o", "b", "a", "p", "x", "o", "b", "a", "p", "s", "sh"};
+        return new String[]{"ID", "Таксон", "h", "s", "x", "o", "b", "a", "p", "x'", "o'", "b'", "a'", "p'", "S", "sh", "Ср. линия"};
     }
 
     public Set<ParameterH> getParameterH() {

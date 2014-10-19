@@ -4,20 +4,17 @@ import org.jdesktop.swingx.JXTable;
 import org.springframework.context.ApplicationContext;
 import org.vsu.eco.dao.ProjectDao;
 import org.vsu.eco.dao.TaxonDao;
-import org.vsu.eco.model.*;
+import org.vsu.eco.model.ParameterH;
+import org.vsu.eco.model.Taxon;
 
 import javax.swing.*;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,17 +23,11 @@ import java.util.List;
 public class PointTable extends JXTable {
 
     private DefaultTableModelNotEditable tableModel;
-
     private ApplicationContext applicationContext;
-
     private JPopupMenu pointTableMenu;
-
     private JMenuItem pointAddTaxonMenu;
-
     private JMenuItem pointRemoveTaxonMenu;
-
     private JMenuItem pointRemovePointMenu;
-
     private org.vsu.eco.model.Point point;
 
     public PointTable(ApplicationContext applicationContext, org.vsu.eco.model.Point point) {
@@ -45,20 +36,29 @@ public class PointTable extends JXTable {
         init();
     }
 
-    private void init() {
+    public void refreshData() {
+        setData();
+
+    }
+
+    private void setData() {
         setModel(new DefaultTableModelNotEditable());
         getTableModel().setColumnIdentifiers(getColumnNames());
-        setVisibleRowCount(3);
-        setComponentPopupMenu(getPointTableMenu());
-        addRightClickSelection();
-        addDoubleClick();
-
         if (point != null) {
             List<ParameterH> parameterHs = getProjectDao().getHforPoint(point);
+            setVisibleRowCount(parameterHs.size());
             for (ParameterH h : parameterHs) {
                 getTableModel().addRow(h.toObjectRow());
             }
         }
+    }
+
+    public void init() {
+        setData();
+        setComponentPopupMenu(getPointTableMenu());
+        addRightClickSelection();
+        addDoubleClick();
+
 
     }
 
@@ -85,7 +85,6 @@ public class PointTable extends JXTable {
         return tableModel;
     }
 
-
     public JPopupMenu getPointTableMenu() {
         if (pointTableMenu == null) {
             pointTableMenu = new JPopupMenu();
@@ -102,17 +101,17 @@ public class PointTable extends JXTable {
             pointAddTaxonMenu.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    ParameterH h = new ParameterH();
-                    h.setPoint(point);
-                    getProjectDao().addParameter(h);
-                    getTableModel().addRow(h.toObjectRow());
+                    saveParameterHDialog(new ParameterH(), point);
                 }
             });
         }
         return pointAddTaxonMenu;
     }
 
-
+    private void saveParameterHDialog(ParameterH parameterH, org.vsu.eco.model.Point point) {
+        ParameterHDialog hDialog = new ParameterHDialog(parameterH, this, point);
+        hDialog.setVisible(true);
+    }
 
     public JMenuItem getPointRemoveTaxonMenu() {
         if (pointRemoveTaxonMenu == null) {
@@ -120,9 +119,9 @@ public class PointTable extends JXTable {
             pointRemoveTaxonMenu.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    ParameterH h = getParameterHfromRow(getSelectedRow());
+                    ParameterH h = getParameterHByRow(getSelectedRow());
                     getProjectDao().removeParamH(h);
-                    getTableModel().removeRow(getSelectedRow());
+                    refreshData();
                 }
             });
         }
@@ -145,7 +144,7 @@ public class PointTable extends JXTable {
         return pointRemovePointMenu;
     }
 
-    private ProjectDao getProjectDao() {
+    public ProjectDao getProjectDao() {
         return (ProjectDao) applicationContext.getBean("projectDao");
     }
 
@@ -166,15 +165,8 @@ public class PointTable extends JXTable {
         return hList;
     }
 
-    private PointTable getMe(){
+    private PointTable getMe() {
         return this;
-    }
-
-    public class DefaultTableModelNotEditable extends DefaultTableModel {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
     }
 
     private void addDoubleClick() {
@@ -185,12 +177,27 @@ public class PointTable extends JXTable {
                 Point p = me.getPoint();
                 int row = table.rowAtPoint(p);
                 if (me.getClickCount() == 2) {
-
-
+                    ParameterH parameterH = getParameterHByRow(row);
+                    saveParameterHDialog(parameterH, point);
                 }
             }
         });
     }
 
+    private ParameterH getParameterHByRow(int row) {
+        long paramId = (Long) getTableModel().getValueAt(row, 0);
+        return getProjectDao().getH(paramId);
+    }
+
+    public TaxonDao getTaxonDao() {
+        return (TaxonDao) applicationContext.getBean("taxonDao");
+    }
+
+    public class DefaultTableModelNotEditable extends DefaultTableModel {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    }
 
 }

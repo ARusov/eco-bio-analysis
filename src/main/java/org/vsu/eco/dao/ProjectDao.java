@@ -110,7 +110,8 @@ public class ProjectDao {
 //            q.executeUpdate();
             Query q = em.createQuery("delete from Point where id=:id").setParameter("id", point.getId());
             q.executeUpdate();
-            System.out.println(point.getId());
         }
     }
+
+
 }

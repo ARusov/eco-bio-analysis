@@ -162,15 +162,8 @@ public class ProjectPanel extends JPanel {
     }
 
     private void  saveProject(){
-        for(Component c: getPointsPanel().getComponents()){
-            if(c instanceof PointPane){
-                PointPane pointPane=(PointPane)c;
-                List<ParameterH> hList=pointPane.getParameterHList();
-                for(ParameterH h:hList){
-                    getProjectDao().addParameter(h);
-                }
-            }
-        }
+        project.setName(projectNameField.getText());
+        getProjectDao().saveOrUpdate(project);
     }
 
 
