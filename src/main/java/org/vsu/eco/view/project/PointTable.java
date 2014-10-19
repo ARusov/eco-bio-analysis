@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class PointTable extends JXTable {
 
-    private DefaultTableModel tableModel;
+    private DefaultTableModelNotEditable tableModel;
 
     private ApplicationContext applicationContext;
 
@@ -46,12 +46,12 @@ public class PointTable extends JXTable {
     }
 
     private void init() {
+        setModel(new DefaultTableModelNotEditable());
         getTableModel().setColumnIdentifiers(getColumnNames());
         setVisibleRowCount(3);
-        getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(new TaxonComboBox(applicationContext, this)));
         setComponentPopupMenu(getPointTableMenu());
         addRightClickSelection();
-        addChangeListener();
+        addDoubleClick();
 
         if (point != null) {
             List<ParameterH> parameterHs = getProjectDao().getHforPoint(point);
@@ -60,22 +60,6 @@ public class PointTable extends JXTable {
             }
         }
 
-    }
-
-    private void addChangeListener() {
-        getDefaultEditor(Object.class).addCellEditorListener(new CellEditorListener() {
-            @Override
-            public void editingStopped(ChangeEvent e) {
-                ParameterH h = getParameterHfromRow(getSelectedRow());
-                getProjectDao().addParameter(h);
-
-            }
-
-            @Override
-            public void editingCanceled(ChangeEvent e) {
-
-            }
-        });
     }
 
     private void addRightClickSelection() {
@@ -97,7 +81,7 @@ public class PointTable extends JXTable {
     }
 
     public DefaultTableModel getTableModel() {
-        tableModel = (DefaultTableModel) getModel();
+        tableModel = (DefaultTableModelNotEditable) getModel();
         return tableModel;
     }
 
@@ -119,7 +103,6 @@ public class PointTable extends JXTable {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     ParameterH h = new ParameterH();
-//                    point.getParameterH().add(h);
                     h.setPoint(point);
                     getProjectDao().addParameter(h);
                     getTableModel().addRow(h.toObjectRow());
@@ -166,15 +149,6 @@ public class PointTable extends JXTable {
         return (ProjectDao) applicationContext.getBean("projectDao");
     }
 
-    @Override
-    public boolean isCellEditable(int row, int column) {
-        if (column == 3 || column == 4 || column == 5 || column == 6 || column == 7 || column == 8) {
-            return false;
-        }
-        return true;
-    }
-
-
     protected ParameterH getParameterHfromRow(int row) {
 
         ParameterH h = getProjectDao().getH((Long) getTableModel().getValueAt(row, 0));
@@ -195,5 +169,28 @@ public class PointTable extends JXTable {
     private PointTable getMe(){
         return this;
     }
+
+    public class DefaultTableModelNotEditable extends DefaultTableModel {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    }
+
+    private void addDoubleClick() {
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent me) {
+                JTable table = (JTable) me.getSource();
+                Point p = me.getPoint();
+                int row = table.rowAtPoint(p);
+                if (me.getClickCount() == 2) {
+
+
+                }
+            }
+        });
+    }
+
 
 }
