@@ -44,9 +44,14 @@ public class PointTable extends JXTable {
     private void setData() {
         setModel(new DefaultTableModelNotEditable());
         getTableModel().setColumnIdentifiers(getColumnNames());
+        getColumnModel().removeColumn(getColumnModel().getColumn(0));
         if (point != null) {
             List<ParameterH> parameterHs = getProjectDao().getHforPoint(point);
-            setVisibleRowCount(parameterHs.size());
+            if (parameterHs.size() > 1) {
+                setVisibleRowCount(parameterHs.size());
+            } else {
+                setVisibleRowCount(2);
+            }
             for (ParameterH h : parameterHs) {
                 getTableModel().addRow(h.toObjectRow());
             }
